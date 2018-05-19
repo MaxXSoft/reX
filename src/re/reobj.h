@@ -12,29 +12,62 @@ class REObject;
 
 class RE {
 public:
+    static REObject Nil();
     static REObject Word(const std::string &word);
     static REObject Range(char c1, char c2);
-    static REObject Nil();
+    static REObject And(REObject lhs, REObject rhs);
+    static REObject Or(REObject lhs, REObject rhs);
+    static REObject Many(REObject reo);
+    static REObject Many1(REObject reo);
+    static REObject Optional(REObject reo);
 };
 
 class REObjectInterface {
 public:
     virtual ~REObjectInterface() = default;
-    virtual NFAPtr GenerateNFA() = 0;
+    virtual NFAModelPtr GenerateNFA() = 0;
+};
+
+class REObject : public std::shared_ptr<REObjectInterface> {
+public:
+    explicit REObject()
+            : std::shared_ptr<REObjectInterface>(nullptr) {}
+    explicit REObject(REObjectInterface *ptr)
+            : std::shared_ptr<REObjectInterface>(ptr) {}
+
+    REObject operator&(REObject reo) {
+        return RE::And(*this, reo);
+    }
+
+    REObject operator|(REObject reo) {
+        return RE::Or(*this, reo);
+    }
+
+    REObject Many() {
+        return RE::Many(*this);
+    }
+
+    REObject Many1() {
+        return RE::Many1(*this);
+    }
+
+    REObject Optional() {
+        return RE::Optional(*this);
+    }
 };
 
 class RENilObj : public REObjectInterface {
 public:
     RENilObj() {}
 
-    NFAPtr GenerateNFA() override;
+    NFAModelPtr GenerateNFA() override;
 };
 
 class RECharObj : public REObjectInterface {
 public:
     RECharObj(char c) : c_(c) {}
 
-    NFAPtr GenerateNFA() override;
+    NFAModelPtr GenerateNFA() override;
 
 private:
     char c_;
@@ -45,7 +78,7 @@ public:
     REAndObj(REObject lhs, REObject rhs)
             : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
-    NFAPtr GenerateNFA() override;
+    NFAModelPtr GenerateNFA() override;
 
 private:
     REObject lhs_, rhs_;
@@ -56,7 +89,7 @@ public:
     REOrObj(REObject lhs, REObject rhs)
             : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
-    NFAPtr GenerateNFA() override;
+    NFAModelPtr GenerateNFA() override;
 
 private:
     REObject lhs_, rhs_;
@@ -66,71 +99,10 @@ class REKleeneObj : public REObjectInterface {
 public:
     REKleeneObj(REObject reo) : reo_(std::move(reo)) {}
 
-    NFAPtr GenerateNFA() override;
+    NFAModelPtr GenerateNFA() override;
 
 private:
     REObject reo_;
-};
-
-class REObject {
-public:
-    explicit REObject() : ptr_(nullptr), destruct_tag_(false) {}
-    explicit REObject(REObjectInterface *ptr)
-            : ptr_(ptr), destruct_tag_(true) {}
-    REObject(const REObject &) = delete;
-    REObject(REObject &&reo)
-            : ptr_(reo.ptr_), destruct_tag_(reo.destruct_tag_) {
-        reo.destruct_tag_ = false;
-        reo.ptr_ = nullptr;
-    }
-    ~REObject() { Release(); }
-
-    REObject &operator=(const REObject &) = delete;
-    REObjectInterface *operator->() const noexcept { return ptr_; }
-    explicit operator bool() const noexcept {
-        return !destruct_tag_ || !ptr_;
-    }
-
-    REObject &operator=(REObject &&reo) noexcept {
-        if (this != &reo) {
-            Release();
-            destruct_tag_ = reo.destruct_tag_;
-            ptr_ = reo.ptr_;
-            reo.destruct_tag_ = false;
-            reo.ptr_ = nullptr;
-        }
-        return *this;
-    }
-
-    REObject &&operator&(REObject reo) {
-        return REObject(new REAndObj(std::move(*this), std::move(reo)));
-    }
-
-    REObject &&operator|(REObject reo) {
-        return REObject(new REOrObj(std::move(*this), std::move(reo)));
-    }
-
-    REObject &&Many() {
-        return REObject(new REKleeneObj(std::move(*this)));
-    }
-
-    REObject &&Many1() {
-        auto kleene = REObject(new REKleeneObj(std::move(*this)));
-        return REObject(new REAndObj(std::move(*this), std::move(kleene)));
-    }
-
-    REObject &&Optional() {
-        auto nil = RE::Nil();
-        return REObject(new REOrObj(std::move(*this), std::move(nil)));
-    }
-
-    REObjectInterface *get() const { return ptr_; }
-
-private:
-    void Release() { if (destruct_tag_) delete ptr_; }
-
-    REObjectInterface *ptr_;
-    bool destruct_tag_;
 };
 
 } // namespace rex
