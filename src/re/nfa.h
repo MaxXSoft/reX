@@ -16,69 +16,74 @@ public:
     virtual DFAPtr GenerateDFA() = 0;
 };
 
-using NFAPtr = std::shared_ptr<NFAInterface>;
-using NFAPtrList = std::list<NFAPtr>;
+class NFAEdge;
+class NFANode;
+class NFAModel;
+
+using NFAEdgePtr = std::shared_ptr<NFAEdge>;
+using NFANodePtr = std::shared_ptr<NFANode>;
+using NFAModelPtr = std::shared_ptr<NFAModel>;
 
 class NFAEdge : public NFAInterface {
 public:
-    static const char kEmpty = '\0';
+    static const char kEmpty;
 
-    NFAEdge(char c, const NFAPtr &tail)
+    NFAEdge(char c, const NFANodePtr &tail)
             : c_(c), tail_(tail) {}
 
     DFAPtr GenerateDFA() override;
 
-    void set_tail(const NFAPtr &tail) { tail_ = tail; }
+    void set_tail(const NFANodePtr &tail) { tail_ = tail; }
 
 private:
     char c_;
-    NFAPtr tail_;
+    NFANodePtr tail_;
 };
 
 class NFANode : public NFAInterface {
 public:
     NFANode() {}
 
-    void AddEdge(const NFAPtr &edge) {
+    void AddEdge(const NFAEdgePtr &edge) {
         out_edges_.push_back(edge);
     }
 
     DFAPtr GenerateDFA() override;
 
 private:
-    NFAPtrList out_edges_;
+    std::list<NFAEdgePtr> out_edges_;
 };
 
 class NFAModel : public NFAInterface {
 public:
     NFAModel() {}
 
-    void AddNode(const NFAPtr &node) {
+    void AddNode(const NFANodePtr &node) {
         nodes_.push_back(node);
     }
 
-    void AddNodes(const NFAPtrList &nodes) {
+    void AddNodes(const std::list<NFANodePtr> &nodes) {
         for (const auto &node : nodes) nodes_.push_back(node);
     }
 
     DFAPtr GenerateDFA() override;
 
-    void set_entry(const std::shared_ptr<NFAEdge> &entry) {
+    void set_entry(const NFAEdgePtr &entry) {
         entry_ = entry;
     }
 
-    void set_tail(const std::shared_ptr<NFANode> &tail) {
+    void set_tail(const NFANodePtr &tail) {
         tail_ = tail;
     }
 
-    const std::shared_ptr<NFAEdge> &entry() const { return entry_; }
-    const std::shared_ptr<NFANode> &tail() const { return tail_; }
-    const NFAPtrList &nodes() const { return nodes_; }
+    const NFAEdgePtr &entry() const { return entry_; }
+    const NFANodePtr &tail() const { return tail_; }
+    const std::list<NFANodePtr> &nodes() const { return nodes_; }
 
 private:
-    std::shared_ptr<NFAEdge> entry_;
-    std::shared_ptr<NFANode> tail_;
-    NFAPtrList nodes_;
+    NFAEdgePtr entry_;
+    NFANodePtr tail_;
+    std::list<NFANodePtr> nodes_;
 };
 
 } // namespace rex
