@@ -33,7 +33,8 @@ public:
 
     DFAPtr GenerateDFA() override;
 
-    void set_tail(const NFANodePtr &tail) { tail_ = tail; }
+    char c() const { return c_; }
+    const NFANodePtr &tail() const { return tail_; }
 
 private:
     char c_;
@@ -49,6 +50,8 @@ public:
     }
 
     DFAPtr GenerateDFA() override;
+
+    const std::list<NFAEdgePtr> &out_edges() const { return out_edges_; }
 
 private:
     std::list<NFAEdgePtr> out_edges_;
