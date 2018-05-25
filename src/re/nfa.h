@@ -4,17 +4,11 @@
 #include <memory>
 #include <utility>
 #include <list>
+#include <unordered_set>
 
 #include "dfa.h"
 
 namespace rex {
-
-class NFAInterface {
-public:
-    virtual ~NFAInterface() = default;
-
-    virtual DFAPtr GenerateDFA() = 0;
-};
 
 class NFAEdge;
 class NFANode;
@@ -23,15 +17,15 @@ class NFAModel;
 using NFAEdgePtr = std::shared_ptr<NFAEdge>;
 using NFANodePtr = std::shared_ptr<NFANode>;
 using NFAModelPtr = std::shared_ptr<NFAModel>;
+using CharSet = std::unordered_set<char>;
 
-class NFAEdge : public NFAInterface {
+class NFAEdge {
 public:
     static const char kEmpty;
 
     NFAEdge(char c, const NFANodePtr &tail)
             : c_(c), tail_(tail) {}
-
-    DFAPtr GenerateDFA() override;
+    ~NFAEdge() {}
 
     char c() const { return c_; }
     const NFANodePtr &tail() const { return tail_; }
@@ -41,15 +35,14 @@ private:
     NFANodePtr tail_;
 };
 
-class NFANode : public NFAInterface {
+class NFANode {
 public:
     NFANode() {}
+    ~NFANode() {}
 
     void AddEdge(const NFAEdgePtr &edge) {
         out_edges_.push_back(edge);
     }
-
-    DFAPtr GenerateDFA() override;
 
     const std::list<NFAEdgePtr> &out_edges() const { return out_edges_; }
 
@@ -57,9 +50,10 @@ private:
     std::list<NFAEdgePtr> out_edges_;
 };
 
-class NFAModel : public NFAInterface {
+class NFAModel {
 public:
     NFAModel() {}
+    ~NFAModel() {}
 
     void AddNode(const NFANodePtr &node) {
         nodes_.push_back(node);
@@ -69,7 +63,14 @@ public:
         for (const auto &node : nodes) nodes_.push_back(node);
     }
 
-    DFAPtr GenerateDFA() override;
+    void AddChar(char c) { char_set_.insert(c); }
+    void AddCharSet(const CharSet &char_set) {
+        for (const auto &c : char_set) char_set_.insert(c);
+    }
+
+    void Release() { for (auto &&i : nodes_) i.reset(); }
+
+    DFAPtr GenerateDFA();
 
     void set_entry(const NFAEdgePtr &entry) {
         entry_ = entry;
@@ -82,11 +83,13 @@ public:
     const NFAEdgePtr &entry() const { return entry_; }
     const NFANodePtr &tail() const { return tail_; }
     const std::list<NFANodePtr> &nodes() const { return nodes_; }
+    const CharSet &char_set() const { return char_set_; }
 
 private:
     NFAEdgePtr entry_;
     NFANodePtr tail_;
     std::list<NFANodePtr> nodes_;
+    CharSet char_set_;
 };
 
 } // namespace rex
