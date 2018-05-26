@@ -15,6 +15,7 @@ public:
     static REObject Nil();
     static REObject Word(const std::string &word);
     static REObject Range(char c1, char c2);
+    static REObject Lambda(LambdaSymbol::SymbolDef func);
     static REObject And(REObject lhs, REObject rhs);
     static REObject Or(REObject lhs, REObject rhs);
     static REObject Many(REObject reo);
@@ -63,14 +64,14 @@ public:
     NFAModelPtr GenerateNFA() override;
 };
 
-class RECharObj : public REObjectInterface {
+class RESymbolObj : public REObjectInterface {
 public:
-    RECharObj(char c) : c_(c) {}
+    RESymbolObj(const SymbolPtr &symbol) : symbol_(symbol) {}
 
     NFAModelPtr GenerateNFA() override;
 
 private:
-    char c_;
+    SymbolPtr symbol_;
 };
 
 class REAndObj : public REObjectInterface {
