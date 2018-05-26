@@ -3,17 +3,69 @@
 
 #include <memory>
 #include <utility>
+#include <list>
+#include <unordered_set>
+#include <string>
+
+#include "charset.h"
 
 namespace rex {
 
-class DFAInterface {
-public:
-    virtual ~DFAInterface() = default;
+class DFAEdge;
+class DFAState;
+class DFAModel;
 
-    virtual void GenerateTable() = 0;
+using DFAEdgePtr = std::shared_ptr<DFAEdge>;
+using DFAStatePtr = std::shared_ptr<DFAState>;
+using DFAModelPtr = std::shared_ptr<DFAModel>;
+
+class DFAEdge {
+public:
+    DFAEdge(const SymbolPtr &symbol, const DFAStatePtr &next)
+            : symbol_(symbol), next_state_(next) {}
+    ~DFAEdge() {}
+
+    const SymbolPtr &symbol() const { return symbol_; }
+    const DFAStatePtr &next_state() const { return next_state_; }
+
+private:
+    SymbolPtr symbol_;
+    DFAStatePtr next_state_;
 };
 
-using DFAPtr = std::shared_ptr<DFAInterface>;
+class DFAState {
+public:
+    DFAState() {}
+    ~DFAState() {}
+
+    void AddEdge(const DFAEdgePtr &edge) { out_edges_.push_back(edge); }
+
+    const std::list<DFAEdgePtr> out_edges() const { return out_edges_; }
+
+private:
+    std::list<DFAEdgePtr> out_edges_;
+};
+
+class DFAModel {
+public:
+    DFAModel() {}
+    ~DFAModel() {}
+
+    void AddFinalState(const DFAStatePtr &state) {
+        final_states_.insert(state);
+    }
+
+    bool TestString(const std::string &str);
+    void Simplify();
+    void GenerateStateTable();
+    void Release();
+
+    void set_initial(const DFAStatePtr &state) { initial_ = state; }
+
+private:
+    DFAStatePtr initial_;
+    std::unordered_set<DFAStatePtr> final_states_;
+};
 
 } // namespace rex
 
