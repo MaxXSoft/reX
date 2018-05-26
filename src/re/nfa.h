@@ -6,6 +6,7 @@
 #include <list>
 #include <unordered_set>
 
+#include "charset.h"
 #include "dfa.h"
 
 namespace rex {
@@ -17,21 +18,26 @@ class NFAModel;
 using NFAEdgePtr = std::shared_ptr<NFAEdge>;
 using NFANodePtr = std::shared_ptr<NFANode>;
 using NFAModelPtr = std::shared_ptr<NFAModel>;
-using CharSet = std::unordered_set<char>;
+
+/*
+    TODO:
+        SymbolSet in NFA model
+        optimize 'or' login
+        compress the states in state table generating process
+*/
+// using SymbolSet = 
 
 class NFAEdge {
 public:
-    static const char kEmpty;
-
-    NFAEdge(char c, const NFANodePtr &tail)
-            : c_(c), tail_(tail) {}
+    NFAEdge(const SymbolPtr &symbol, const NFANodePtr &tail)
+            : symbol_(symbol), tail_(tail) {}
     ~NFAEdge() {}
 
-    char c() const { return c_; }
+    const SymbolPtr &symbol() const { return symbol_; }
     const NFANodePtr &tail() const { return tail_; }
 
 private:
-    char c_;
+    SymbolPtr symbol_;
     NFANodePtr tail_;
 };
 
@@ -40,9 +46,7 @@ public:
     NFANode() {}
     ~NFANode() {}
 
-    void AddEdge(const NFAEdgePtr &edge) {
-        out_edges_.push_back(edge);
-    }
+    void AddEdge(const NFAEdgePtr &edge) { out_edges_.push_back(edge); }
 
     const std::list<NFAEdgePtr> &out_edges() const { return out_edges_; }
 
@@ -63,14 +67,15 @@ public:
         for (const auto &node : nodes) nodes_.push_back(node);
     }
 
-    void AddChar(char c) { char_set_.insert(c); }
-    void AddCharSet(const CharSet &char_set) {
-        for (const auto &c : char_set) char_set_.insert(c);
+    void AddSymbol(const SymbolPtr &symbol) {
+        char_set_.InsertSymbol(symbol);
     }
+
+    void AddCharSet(const CharSet &char_set) { char_set_.Merge(char_set); }
 
     void Release() { for (auto &&i : nodes_) i.reset(); }
 
-    DFAPtr GenerateDFA();
+    DFAModelPtr GenerateDFA();
 
     void set_entry(const NFAEdgePtr &entry) {
         entry_ = entry;
