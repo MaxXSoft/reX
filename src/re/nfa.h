@@ -41,7 +41,12 @@ public:
 
     void AddEdge(const NFAEdgePtr &edge) { out_edges_.push_back(edge); }
 
-    void Release() { for (auto &&i : out_edges_) i.reset(); }
+    void Release() {
+        if (out_edges_.empty()) return;
+        auto edges = out_edges_;
+        out_edges_.clear();
+        for (auto &&i : edges) i->tail()->Release();
+    }
 
     const std::list<NFAEdgePtr> &out_edges() const { return out_edges_; }
 
@@ -54,14 +59,6 @@ public:
     NFAModel() {}
     ~NFAModel() {}
 
-    void AddNode(const NFANodePtr &node) {
-        nodes_.push_back(node);
-    }
-
-    void AddNodes(const std::list<NFANodePtr> &nodes) {
-        for (const auto &node : nodes) nodes_.push_back(node);
-    }
-
     void AddSymbol(const SymbolPtr &symbol) {
         symbol_set_.insert(symbol);
     }
@@ -73,12 +70,10 @@ public:
     }
 
     void Release() {
+        entry_->tail()->Release();
         entry_.reset();
         tail_.reset();
-        for (auto &&i : nodes_) {
-            i->Release();
-            i.reset();
-        }
+        symbol_set_.clear();
     }
 
     DFAModelPtr GenerateDFA();
@@ -93,7 +88,6 @@ public:
 
     const NFAEdgePtr &entry() const { return entry_; }
     const NFANodePtr &tail() const { return tail_; }
-    const std::list<NFANodePtr> &nodes() const { return nodes_; }
     const SymbolSet &symbol_set() const { return symbol_set_; }
 
 private:
@@ -101,7 +95,6 @@ private:
 
     NFAEdgePtr entry_;
     NFANodePtr tail_;
-    std::list<NFANodePtr> nodes_;
     SymbolSet symbol_set_;
 };
 

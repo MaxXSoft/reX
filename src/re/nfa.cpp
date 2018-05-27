@@ -83,7 +83,6 @@ void NFAModel::NormalizeNFA() {
         auto nil_edge = std::make_shared<NFAEdge>(nullptr, nil_node);
         nil_node->AddEdge(entry_);
         entry_ = nil_edge;
-        nodes_.push_back(nil_node);
     }
     // remove all unique symbol
     for (auto it = symbol_set_.begin(); it != symbol_set_.end(); ) {
@@ -138,6 +137,9 @@ DFAModelPtr NFAModel::GenerateDFA() {
             // current state is a final state of DFA
             if (dfa_state.find(tail_) != dfa_state.end()) {
                 model->AddFinalState(it->second);
+            }
+            else {
+                model->AddState(it->second);
             }
         }
         set_queue.pop_front();

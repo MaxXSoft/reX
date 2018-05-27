@@ -56,7 +56,6 @@ NFAModelPtr RENilObj::GenerateNFA() {
     auto node = std::make_shared<NFANode>();
     auto edge = std::make_shared<NFAEdge>(nullptr, node);
     auto model = std::make_shared<NFAModel>();
-    model->AddNode(node);
     model->set_entry(edge);
     model->set_tail(node);
     return model;
@@ -66,7 +65,6 @@ NFAModelPtr RESymbolObj::GenerateNFA() {
     auto node = std::make_shared<NFANode>();
     auto edge = std::make_shared<NFAEdge>(symbol_, node);
     auto model = std::make_shared<NFAModel>();
-    model->AddNode(node);
     model->set_entry(edge);
     model->set_tail(node);
     model->AddSymbol(symbol_);
@@ -83,9 +81,6 @@ NFAModelPtr REAndObj::GenerateNFA() {
     model->set_tail(rhs->tail());
     // connect lhs & rhs
     lhs->tail()->AddEdge(rhs->entry());
-    // add nodes of lhs & rhs
-    model->AddNodes(lhs->nodes());
-    model->AddNodes(rhs->nodes());
     // merge char set
     model->AddSymbolSet(lhs->symbol_set());
     model->AddSymbolSet(rhs->symbol_set());
@@ -106,8 +101,7 @@ void REOrObj::PreprocOrLogic(NFAModelPtr model,
         // add & set new entry
         auto new_entry = std::make_shared<NFAEdge>(nullptr, node);
         model->set_entry(new_entry);
-        // add symbols & node
-        model->AddNode(node);
+        // add symbols
         model->AddSymbol(common);
         model->AddSymbol(symbol);
     }
@@ -156,10 +150,6 @@ NFAModelPtr REOrObj::GenerateNFA() {
     auto model = std::make_shared<NFAModel>();
     model->set_entry(entry);
     model->set_tail(tail);
-    model->AddNode(node);
-    model->AddNodes(lhs->nodes());
-    model->AddNodes(rhs->nodes());
-    model->AddNode(tail);
     // merge char set
     model->AddSymbolSet(lhs->symbol_set());
     model->AddSymbolSet(rhs->symbol_set());
@@ -180,8 +170,6 @@ NFAModelPtr REKleeneObj::GenerateNFA() {
     auto model = std::make_shared<NFAModel>();
     model->set_entry(entry);
     model->set_tail(tail);
-    model->AddNode(tail);
-    model->AddNodes(src->nodes());
     // add char set
     model->AddSymbolSet(src->symbol_set());
     return model;
