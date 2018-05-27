@@ -59,9 +59,7 @@ void DFAModel::GenerateStateTable() {
         std::cout << std::endl;
         for (const auto &edge : cur_state->out_edges()) {
             auto next = edge->next_state();
-            std::cout << "  symbol(";
-            PrintPointer(edge->symbol().get());
-            std::cout << "): ";
+            std::cout << "  symbol(" << edge->symbol() << "): ";
             PrintPointer(next.get());
             std::cout << std::endl;
             state_queue.push(next);
