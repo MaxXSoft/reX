@@ -21,11 +21,9 @@ using NFAModelPtr = std::shared_ptr<NFAModel>;
 
 /*
     TODO:
-        SymbolSet in NFA model
         optimize 'or' login
         compress the states in state table generating process
 */
-// using SymbolSet = 
 
 class NFAEdge {
 public:
@@ -68,10 +66,14 @@ public:
     }
 
     void AddSymbol(const SymbolPtr &symbol) {
-        char_set_.InsertSymbol(symbol);
+        symbol_set_.insert(symbol);
     }
 
-    void AddCharSet(const CharSet &char_set) { char_set_.Merge(char_set); }
+    void AddSymbolSet(const SymbolSet &symbol_set) {
+        for (const auto &symbol : symbol_set) {
+            symbol_set_.insert(symbol);
+        }
+    }
 
     void Release() { for (auto &&i : nodes_) i.reset(); }
 
@@ -88,13 +90,13 @@ public:
     const NFAEdgePtr &entry() const { return entry_; }
     const NFANodePtr &tail() const { return tail_; }
     const std::list<NFANodePtr> &nodes() const { return nodes_; }
-    const CharSet &char_set() const { return char_set_; }
+    const SymbolSet &symbol_set() const { return symbol_set_; }
 
 private:
     NFAEdgePtr entry_;
     NFANodePtr tail_;
     std::list<NFANodePtr> nodes_;
-    CharSet char_set_;
+    SymbolSet symbol_set_;
 };
 
 } // namespace rex

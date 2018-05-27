@@ -86,8 +86,8 @@ NFAModelPtr REAndObj::GenerateNFA() {
     model->AddNodes(lhs->nodes());
     model->AddNodes(rhs->nodes());
     // merge char set
-    model->AddCharSet(lhs->char_set());
-    model->AddCharSet(rhs->char_set());
+    model->AddSymbolSet(lhs->symbol_set());
+    model->AddSymbolSet(rhs->symbol_set());
     return model;
 }
 
@@ -116,8 +116,8 @@ NFAModelPtr REOrObj::GenerateNFA() {
     model->AddNodes(rhs->nodes());
     model->AddNode(tail);
     // merge char set
-    model->AddCharSet(lhs->char_set());
-    model->AddCharSet(rhs->char_set());
+    model->AddSymbolSet(lhs->symbol_set());
+    model->AddSymbolSet(rhs->symbol_set());
     return model;
 }
 
@@ -138,7 +138,7 @@ NFAModelPtr REKleeneObj::GenerateNFA() {
     model->AddNode(tail);
     model->AddNodes(src->nodes());
     // add char set
-    model->AddCharSet(src->char_set());
+    model->AddSymbolSet(src->symbol_set());
     return model;
 }
 

@@ -57,11 +57,13 @@ NFANodeSet GetEpsilonClosure(const NFANodePtr &node) {
 
 // for DFA conversion
 // TODO: optimize
-NFANodeSet GetDFAState(const NFANodeSet &nodes, char c) {
+NFANodeSet GetDFAState(const NFANodeSet &nodes, const SymbolPtr &symbol) {
     NFANodeSet node_set, final_set;
     for (const auto &node : nodes) {
         for (const auto &edge : node->out_edges()) {
-            if (edge->symbol()->TestChar(c)) node_set.push(edge->tail());
+            if (symbol->Equal(edge->symbol().get())) {
+                node_set.push(edge->tail());
+            }
         }
     }
     for (const auto &node : node_set) {
@@ -117,13 +119,13 @@ DFAModelPtr NFAModel::GenerateDFA() {
     while (!set_queue.empty()) {
         const auto &front = set_queue.front();
         const auto &cur_state = state_set[front.hash_value()];
-        for (const auto &c : char_set_) {
-            auto dfa_state = GetDFAState(front, c);
+        for (const auto &symbol : symbol_set_) {
+            auto dfa_state = GetDFAState(front, symbol);
             auto it = Push(dfa_state);
             // empty state set (adding empty edge)
             if (it == state_set.end()) continue;
             // add edge to new state
-            auto new_edge = std::make_shared<DFAEdge>(c, it->second);
+            auto new_edge = std::make_shared<DFAEdge>(symbol, it->second);
             cur_state->AddEdge(new_edge);
             // current state is a final state of DFA
             if (dfa_state.find(tail_) != dfa_state.end()) {
