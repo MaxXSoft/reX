@@ -24,9 +24,10 @@ REObject RE::Range(char c1, char c2) {
     return REObject(new RESymbolObj(symbol));
 }
 
-REObject RE::Lambda(LambdaSymbol::SymbolDef func) {
-    auto symbol = std::make_shared<LambdaSymbol>(func);
-    return REObject(new RESymbolObj(symbol));
+REObject RE::Lambda(CharSet::SymbolDef func) {
+    CharSet charset;
+    charset.InsertLambda(func);
+    return REObject(new RESymbolObj(charset.MakeSymbol()));
 }
 
 REObject RE::And(REObject lhs, REObject rhs) {
@@ -91,7 +92,54 @@ NFAModelPtr REAndObj::GenerateNFA() {
     return model;
 }
 
+void REOrObj::PreprocOrLogic(NFAModelPtr model,
+        SymbolPtr common, SymbolPtr symbol) {
+    if (symbol) {
+        auto entry = model->entry();
+        entry->set_symbol(symbol);
+        // add edge for the common part of symbol
+        auto edge = std::make_shared<NFAEdge>(common, entry->tail());
+        // add new node for merging two edges
+        auto node = std::make_shared<NFANode>();
+        node->AddEdge(entry);
+        node->AddEdge(edge);
+        // add & set new entry
+        auto new_entry = std::make_shared<NFAEdge>(nullptr, node);
+        model->set_entry(new_entry);
+        // add symbols & node
+        model->AddNode(node);
+        model->AddSymbol(common);
+        model->AddSymbol(symbol);
+    }
+    else {
+        model->entry()->set_symbol(common);
+        model->AddSymbol(common);
+    }
+}
+
 NFAModelPtr REOrObj::GenerateNFA() {
+    // get lhs & rhs
+    auto lhs = lhs_->GenerateNFA();
+    auto rhs = rhs_->GenerateNFA();
+    // create charset for two models
+    CharSet lhs_set, rhs_set;
+    lhs_set.InsertSymbol(lhs->entry()->symbol());
+    rhs_set.InsertSymbol(rhs->entry()->symbol());
+    // judge if charsets have intersections
+    if (lhs_set != rhs_set && lhs_set.HasIntersection(rhs_set)) {
+        // extract the common part of two sets
+        auto common = lhs_set;
+        common.Intersect(rhs_set);
+        lhs_set.SymDiffer(common);
+        rhs_set.SymDiffer(common);
+        // make new symbols
+        auto common_symbol = common.MakeSymbol();
+        auto lhs_symbol = lhs_set.MakeSymbol();
+        auto rhs_symbol = rhs_set.MakeSymbol();
+        // preprocess or logic for lhs & rhs
+        PreprocOrLogic(lhs, common_symbol, lhs_symbol);
+        PreprocOrLogic(rhs, common_symbol, rhs_symbol);
+    }
     // create entry edge & state nodes
     auto node = std::make_shared<NFANode>();
     auto entry = std::make_shared<NFAEdge>(nullptr, node);
@@ -99,9 +147,6 @@ NFAModelPtr REOrObj::GenerateNFA() {
     auto tail = std::make_shared<NFANode>();
     auto back0 = std::make_shared<NFAEdge>(nullptr, tail);
     auto back1 = std::make_shared<NFAEdge>(nullptr, tail);
-    // get lhs & rhs
-    auto lhs = lhs_->GenerateNFA();
-    auto rhs = rhs_->GenerateNFA();
     // generate the 'or' logic
     node->AddEdge(lhs->entry());
     node->AddEdge(rhs->entry());

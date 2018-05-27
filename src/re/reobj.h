@@ -3,6 +3,7 @@
 
 #include <string>
 #include <utility>
+#include <functional>
 
 #include "nfa.h"
 
@@ -15,7 +16,7 @@ public:
     static REObject Nil();
     static REObject Word(const std::string &word);
     static REObject Range(char c1, char c2);
-    static REObject Lambda(LambdaSymbol::SymbolDef func);
+    static REObject Lambda(CharSet::SymbolDef func);
     static REObject And(REObject lhs, REObject rhs);
     static REObject Or(REObject lhs, REObject rhs);
     static REObject Many(REObject reo);
@@ -93,6 +94,8 @@ public:
     NFAModelPtr GenerateNFA() override;
 
 private:
+    void PreprocOrLogic( NFAModelPtr,  SymbolPtr,  SymbolPtr);
+
     REObject lhs_, rhs_;
 };
 
