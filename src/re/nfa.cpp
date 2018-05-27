@@ -8,7 +8,6 @@
 namespace {
 
 using NFANodePtr = rex::NFANodePtr;
-using NFAModelPtr = rex::NFAModelPtr;
 using SymbolPtr = rex::SymbolPtr;
 
 class NFANodeSet : public std::unordered_set<NFANodePtr> {
@@ -73,20 +72,29 @@ NFANodeSet GetDFAState(const NFANodeSet &nodes, const SymbolPtr &symbol) {
     return final_set;
 }
 
-// add redundant epsilon edge for an entrance of NFA model
-void NormalizeNFA(rex::NFAModel &model) {
-    if (model.entry()->symbol()) {
-        auto nil_node = std::make_shared<rex::NFANode>();
-        auto nil_edge = std::make_shared<rex::NFAEdge>(nullptr, nil_node);
-        nil_node->AddEdge(model.entry());
-        model.set_entry(nil_edge);
-        model.AddNode(nil_node);
-    }
-}
-
 } // namespace
 
 namespace rex {
+
+void NFAModel::NormalizeNFA() {
+    // add redundant epsilon edge for an entrance of NFA model
+    if (entry_->symbol()) {
+        auto nil_node = std::make_shared<NFANode>();
+        auto nil_edge = std::make_shared<NFAEdge>(nullptr, nil_node);
+        nil_node->AddEdge(entry_);
+        entry_ = nil_edge;
+        nodes_.push_back(nil_node);
+    }
+    // remove all unique symbol
+    for (auto it = symbol_set_.begin(); it != symbol_set_.end(); ) {
+        if ((*it).use_count() == 1) {
+            it = symbol_set_.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
 
 DFAModelPtr NFAModel::GenerateDFA() {
     std::deque<NFANodeSet> set_queue;
@@ -106,7 +114,7 @@ DFAModelPtr NFAModel::GenerateDFA() {
         return ret.first;
     };
     // normalization current NFA
-    NormalizeNFA(*this);
+    NormalizeNFA();
     // get initial states set & push into queue
     auto initial_set = GetEpsilonClosure(entry_->tail());
     auto it = Push(initial_set);

@@ -19,18 +19,13 @@ using NFAEdgePtr = std::shared_ptr<NFAEdge>;
 using NFANodePtr = std::shared_ptr<NFANode>;
 using NFAModelPtr = std::shared_ptr<NFAModel>;
 
-/*
-    TODO:
-        optimize 'or' login
-        compress the states in state table generating process
-*/
-
 class NFAEdge {
 public:
     NFAEdge(const SymbolPtr &symbol, const NFANodePtr &tail)
             : symbol_(symbol), tail_(tail) {}
     ~NFAEdge() {}
 
+    void set_symbol(const SymbolPtr &symbol) { symbol_ = symbol; }
     const SymbolPtr &symbol() const { return symbol_; }
     const NFANodePtr &tail() const { return tail_; }
 
@@ -93,6 +88,8 @@ public:
     const SymbolSet &symbol_set() const { return symbol_set_; }
 
 private:
+    void NormalizeNFA();
+
     NFAEdgePtr entry_;
     NFANodePtr tail_;
     std::list<NFANodePtr> nodes_;
