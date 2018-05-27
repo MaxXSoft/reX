@@ -41,6 +41,8 @@ public:
 
     void AddEdge(const NFAEdgePtr &edge) { out_edges_.push_back(edge); }
 
+    void Release() { for (auto &&i : out_edges_) i.reset(); }
+
     const std::list<NFAEdgePtr> &out_edges() const { return out_edges_; }
 
 private:
@@ -70,7 +72,14 @@ public:
         }
     }
 
-    void Release() { for (auto &&i : nodes_) i.reset(); }
+    void Release() {
+        entry_.reset();
+        tail_.reset();
+        for (auto &&i : nodes_) {
+            i->Release();
+            i.reset();
+        }
+    }
 
     DFAModelPtr GenerateDFA();
 
