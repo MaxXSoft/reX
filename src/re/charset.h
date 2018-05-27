@@ -20,8 +20,7 @@ public:
     virtual std::size_t GetHash() const = 0;
 
     virtual bool Equal(const SymbolBase *rhs) const {
-        if (rhs->type_ != type_) return false;
-        return true;
+        return rhs && rhs->type_ == type_;
     };
 
 protected:
@@ -261,6 +260,13 @@ public:
         return char_set_[0] || char_set_[1] || char_set_[2] || char_set_[3];
     }
 
+    bool HasIntersection(const CharSet &rhs) {
+        for (int i = 0; i < 4; ++i) {
+            if ((char_set_[i] & rhs.char_set_[i])) return true;
+        }
+        return false;
+    }
+
     CharSetIterator begin() const {
         return CharSetIterator(char_set_, false);
     }
@@ -269,7 +275,7 @@ public:
         return CharSetIterator(char_set_, true);
     }
 
-    bool Equal(const CharSet &rhs) const {
+    bool operator==(const CharSet &rhs) const {
         bool equal = true;
         for (int i = 0; i < 4; ++i) {
             equal &= char_set_[i] == rhs.char_set_[i];
@@ -277,18 +283,9 @@ public:
         return equal;
     }
 
-    friend bool HasIntersection(const CharSet &lhs, const CharSet &rhs);
-
 private:
     std::uint64_t char_set_[4];
 };
-
-bool HasIntersection(const CharSet &lhs, const CharSet &rhs) {
-    for (int i = 0; i < 4; ++i) {
-        if ((lhs.char_set_[i] & rhs.char_set_[i])) return true;
-    }
-    return false;
-}
 
 } // namespace rex
 
