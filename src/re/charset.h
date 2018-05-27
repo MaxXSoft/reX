@@ -192,6 +192,7 @@ public:
     }
 
     void InsertSymbol(const SymbolPtr &symbol) {
+        if (!symbol) return;
         auto char_min = std::numeric_limits<char>::min();
         auto char_max = std::numeric_limits<char>::max();
         for (int c = char_min; c <= char_max; ++c) {
