@@ -12,46 +12,142 @@
 
 namespace rex {
 
-class SymbolInterface {
+class SymbolBase {
 public:
-    virtual ~SymbolInterface() = default;
+    virtual ~SymbolBase() = default;
 
     virtual bool TestChar(char c) const = 0;
+    virtual std::size_t GetHash() const = 0;
+
+    virtual bool Equal(const SymbolBase *rhs) const {
+        if (rhs->type_ != type_) return false;
+        return true;
+    };
+
+protected:
+    enum class SymbolType : char {
+        Char, Range, Lambda, Set
+    };
+
+    SymbolBase(SymbolType type) : type_(type) {}
+
+private:
+    SymbolType type_;
 };
 
-using SymbolPtr = std::shared_ptr<SymbolInterface>;
+using SymbolPtr = std::shared_ptr<SymbolBase>;
 
-class CharSymbol : public SymbolInterface {
+class CharSymbol : public SymbolBase {
 public:
-    CharSymbol(char c) : c_(c) {}
+    CharSymbol(char c) : SymbolBase(SymbolType::Char), c_(c) {}
 
     bool TestChar(char c) const override { return c == c_; }
+    std::size_t GetHash() const override { return std::hash<char>{}(c_); }
+
+    bool Equal(const SymbolBase *rhs) const override {
+        if (!SymbolBase::Equal(rhs)) return false;
+        auto ptr = static_cast<const CharSymbol *>(rhs);
+        return ptr->c_ == c_;
+    }
 
 private:
     char c_;
 };
 
-class RangeSymbol : public SymbolInterface {
+class RangeSymbol : public SymbolBase {
 public:
-    RangeSymbol(char c0, char c1) : c0_(c0), c1_(c1) { assert(c0 <= c1); }
+    RangeSymbol(char c0, char c1)
+            : SymbolBase(SymbolType::Range), c0_(c0), c1_(c1) {
+        assert(c0 <= c1);
+    }
 
     bool TestChar(char c) const override { return c0_ <= c && c <= c1_; }
+    std::size_t GetHash() const override {
+        auto hash_c0 = std::hash<char>{}(c0_);
+        auto hash_c1 = std::hash<char>{}(c1_);
+        HashCombile(hash_c0, hash_c1);
+        return hash_c0;
+    }
+
+    bool Equal(const SymbolBase *rhs) const override {
+        if (!SymbolBase::Equal(rhs)) return false;
+        auto ptr = static_cast<const RangeSymbol *>(rhs);
+        return ptr->c0_ == c0_ && ptr->c1_ == c1_;
+    }
 
 private:
     char c0_, c1_;
 };
 
-class LambdaSymbol : public SymbolInterface {
+class LambdaSymbol : public SymbolBase {
 public:
     using SymbolDef = std::function<bool(char)>;
 
-    LambdaSymbol(SymbolDef func) : func_(func) {}
+    LambdaSymbol(SymbolDef func)
+            : SymbolBase(SymbolType::Lambda), func_(func) {}
 
     bool TestChar(char c) const override { return func_(c); }
+    std::size_t GetHash() const override {
+        auto ptr = func_.target<bool(char)>();
+        auto ptr_int = reinterpret_cast<std::size_t>(ptr);
+        return std::hash<std::size_t>{}(ptr_int);
+    }
+
+    bool Equal(const SymbolBase *rhs) const override {
+        if (!SymbolBase::Equal(rhs)) return false;
+        auto ptr = static_cast<const LambdaSymbol *>(rhs);
+        return ptr->func_.target<bool(char)>() == func_.target<bool(char)>();
+    }
 
 private:
     SymbolDef func_;
 };
+
+class SetSymbol : public SymbolBase {
+public:
+    SetSymbol(const std::uint64_t char_set[4])
+            : SymbolBase(SymbolType::Set) {
+        for (int i = 0; i < 4; ++i) char_set_[i] = char_set[i];
+    }
+
+    bool TestChar(char c) const override {
+        auto index = static_cast<unsigned int>(c);
+        return char_set_[index / 64] & (1ULL << (index % 64));
+    }
+    std::size_t GetHash() const override {
+        std::size_t hash_val = 0;
+        for (const auto &i : char_set_) {
+            HashCombile(hash_val, std::hash<std::uint64_t>{}(i));
+        }
+        return hash_val;
+    }
+
+    bool Equal(const SymbolBase *rhs) const override {
+        if (!SymbolBase::Equal(rhs)) return false;
+        auto ptr = static_cast<const SetSymbol *>(rhs);
+        for (int i = 0; i < 4; ++i) {
+            if (ptr->char_set_[i] != char_set_[i]) return false;
+        }
+        return true;
+    }
+
+private:
+    std::uint64_t char_set_[4];
+};
+
+struct SymbolHash {
+    std::size_t operator()(const SymbolPtr &ptr) {
+        return ptr->GetHash();
+    }
+};
+
+struct SymbolEqual {
+    bool operator()(const SymbolPtr &lhs, const SymbolPtr &rhs) {
+        return lhs->Equal(rhs.get());
+    }
+};
+
+using SymbolSet = std::unordered_set<SymbolPtr, SymbolHash, SymbolEqual>;
 
 class CharSet {
 public:
@@ -76,7 +172,7 @@ public:
             if (end) {
                 for (int j = 255; j >= 0; --j) {
                     if ((char_set_[j / 64] & (1ULL << j % 64))) {
-                        index_ = j;
+                        index_ = j + 1;
                         break;
                     }
                 }
@@ -84,16 +180,19 @@ public:
         }
         ~CharSetIterator() {}
 
-        bool operator!=(const CharSetIterator &rhs) { index_ != rhs.index_; }
+        bool operator!=(const CharSetIterator &rhs) {
+            return index_ != rhs.index_;
+        }
 
         const CharSetIterator &operator++() {
             if (index_ < 256) {
                 for (int i = index_ + 1; i < 256; ++i) {
                     if ((char_set_[i / 64] & (1ULL << i % 64))) {
                         index_ = i;
-                        break;
+                        return *this;
                     }
                 }
+                ++index_;
             }
             return *this;
         }
@@ -118,7 +217,7 @@ public:
     void InsertSymbol(const SymbolPtr &symbol) {
         auto char_min = std::numeric_limits<char>::min();
         auto char_max = std::numeric_limits<char>::max();
-        for (char c = char_min; c <= char_max; ++c) {
+        for (int c = char_min; c <= char_max; ++c) {
             if (symbol->TestChar(c)) Insert(c);
         }
     }
@@ -170,7 +269,7 @@ public:
         return CharSetIterator(char_set_, true);
     }
 
-    bool operator==(const CharSet &rhs) const {
+    bool Equal(const CharSet &rhs) const {
         bool equal = true;
         for (int i = 0; i < 4; ++i) {
             equal &= char_set_[i] == rhs.char_set_[i];
