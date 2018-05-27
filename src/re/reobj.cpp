@@ -44,7 +44,7 @@ REObject RE::Many(REObject reo) {
 
 REObject RE::Many1(REObject reo) {
     auto kleene = REObject(new REKleeneObj(reo));
-    return REObject(new REAndObj(reo, kleene));
+    return REObject(new REAndObj(reo, std::move(kleene)));
 }
 
 REObject RE::Optional(REObject reo) {
