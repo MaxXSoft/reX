@@ -25,7 +25,7 @@ public:
 
 protected:
     enum class SymbolType : char {
-        Char, Range, Lambda, Set
+        Char, Range, Set
     };
 
     SymbolBase(SymbolType type) : type_(type) {}
@@ -78,30 +78,6 @@ private:
     char c0_, c1_;
 };
 
-class LambdaSymbol : public SymbolBase {
-public:
-    using SymbolDef = std::function<bool(char)>;
-
-    LambdaSymbol(SymbolDef func)
-            : SymbolBase(SymbolType::Lambda), func_(func) {}
-
-    bool TestChar(char c) const override { return func_(c); }
-    std::size_t GetHash() const override {
-        auto ptr = func_.target<bool(char)>();
-        auto ptr_int = reinterpret_cast<std::size_t>(ptr);
-        return std::hash<std::size_t>{}(ptr_int);
-    }
-
-    bool Equal(const SymbolBase *rhs) const override {
-        if (!SymbolBase::Equal(rhs)) return false;
-        auto ptr = static_cast<const LambdaSymbol *>(rhs);
-        return ptr->func_.target<bool(char)>() == func_.target<bool(char)>();
-    }
-
-private:
-    SymbolDef func_;
-};
-
 class SetSymbol : public SymbolBase {
 public:
     SetSymbol(const std::uint64_t char_set[4])
@@ -110,7 +86,7 @@ public:
     }
 
     bool TestChar(char c) const override {
-        auto index = static_cast<unsigned int>(c);
+        auto index = static_cast<unsigned int>(c) & 0xff;
         return char_set_[index / 64] & (1ULL << (index % 64));
     }
     std::size_t GetHash() const override {
@@ -150,6 +126,8 @@ using SymbolSet = std::unordered_set<SymbolPtr, SymbolHash, SymbolEqual>;
 
 class CharSet {
 public:
+    using SymbolDef = std::function<bool(char)>;
+
     CharSet() { Clear(); }
     ~CharSet() {}
 
@@ -204,12 +182,12 @@ public:
     };
 
     void Insert(char c) {
-        auto index = static_cast<unsigned int>(c);
+        auto index = static_cast<unsigned int>(c) & 0xff;
         char_set_[index / 64] |= (1ULL << (index % 64));
     }
 
     void Remove(char c) {
-        auto index = static_cast<unsigned int>(c);
+        auto index = static_cast<unsigned int>(c) & 0xff;
         char_set_[index / 64] &= ~(1ULL << (index % 64));
     }
 
@@ -221,18 +199,20 @@ public:
         }
     }
 
+    void InsertLambda(SymbolDef func) {
+        auto char_min = std::numeric_limits<char>::min();
+        auto char_max = std::numeric_limits<char>::max();
+        for (int c = char_min; c <= char_max; ++c) {
+            if (func(c)) Insert(c);
+        }
+    }
+
     SymbolPtr MakeSymbol() const {
-        std::uint64_t cs[] = {
-            char_set_[0], char_set_[1], char_set_[2], char_set_[3]
-        };
-        return std::make_shared<LambdaSymbol>([cs](char c) {
-            auto index = static_cast<unsigned int>(c);
-            return cs[index / 64] & (1ULL << (index % 64));
-        });
+        return Empty() ? nullptr : std::make_shared<SetSymbol>(char_set_);
     }
 
     bool Include(char c) const {
-        auto index = static_cast<unsigned int>(c);
+        auto index = static_cast<unsigned int>(c) & 0xff;
         return char_set_[index / 64] & (1ULL << (index % 64));
     }
 
@@ -257,7 +237,8 @@ public:
     }
 
     bool Empty() const {
-        return char_set_[0] || char_set_[1] || char_set_[2] || char_set_[3];
+        return !(char_set_[0] || char_set_[1]
+                || char_set_[2] || char_set_[3]);
     }
 
     bool HasIntersection(const CharSet &rhs) {
@@ -281,6 +262,17 @@ public:
             equal &= char_set_[i] == rhs.char_set_[i];
         }
         return equal;
+    }
+
+    bool operator!=(const CharSet &rhs) const {
+        for (int i = 0; i < 4; ++i) {
+            if (char_set_[i] != rhs.char_set_[i]) return true;
+        }
+        return false;
+    }
+
+    operator bool() const {
+        return !Empty();
     }
 
 private:
