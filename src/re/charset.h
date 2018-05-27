@@ -146,7 +146,7 @@ public:
         for (int i = 0; i < 4; ++i) char_set_[i] &= char_set.char_set_[i];
     }
 
-    void Differ(const CharSet &char_set) {
+    void SymDiffer(const CharSet &char_set) {
         for (int i = 0; i < 4; ++i) char_set_[i] ^= char_set.char_set_[i];
     }
 
@@ -178,9 +178,18 @@ public:
         return equal;
     }
 
+    friend bool HasIntersection(const CharSet &lhs, const CharSet &rhs);
+
 private:
     std::uint64_t char_set_[4];
 };
+
+bool HasIntersection(const CharSet &lhs, const CharSet &rhs) {
+    for (int i = 0; i < 4; ++i) {
+        if ((lhs.char_set_[i] & rhs.char_set_[i])) return true;
+    }
+    return false;
+}
 
 } // namespace rex
 
