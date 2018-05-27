@@ -39,6 +39,7 @@ public:
     ~DFAState() {}
 
     void AddEdge(const DFAEdgePtr &edge) { out_edges_.push_back(edge); }
+    void Release() { out_edges_.clear(); }
 
     const std::list<DFAEdgePtr> out_edges() const { return out_edges_; }
 
@@ -51,6 +52,8 @@ public:
     DFAModel() {}
     ~DFAModel() {}
 
+    void AddState(const DFAStatePtr &state) { states_.insert(state); }
+
     void AddFinalState(const DFAStatePtr &state) {
         final_states_.insert(state);
     }
@@ -58,13 +61,20 @@ public:
     bool TestString(const std::string &str);
     void Simplify();
     void GenerateStateTable();
-    void Release();
+
+    void Release() {
+        initial_.reset();
+        for (auto &&i : states_) i->Release();
+        for (auto &&i : final_states_) i->Release();
+        states_.clear();
+        final_states_.clear();
+    }
 
     void set_initial(const DFAStatePtr &state) { initial_ = state; }
 
 private:
     DFAStatePtr initial_;
-    std::unordered_set<DFAStatePtr> final_states_;
+    std::unordered_set<DFAStatePtr> states_, final_states_;
 };
 
 } // namespace rex
