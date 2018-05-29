@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 #include <queue>
-#include <map>
+#include <unordered_map>
 
 namespace {
 
@@ -99,7 +99,7 @@ void NFAModel::NormalizeNFA() {
 // TODO: optimize
 DFAModelPtr NFAModel::GenerateDFA() {
     std::deque<NFANodeSet> set_queue;
-    std::map<NFANodeSet::HashType, DFAStatePtr> state_set;
+    std::unordered_map<NFANodeSet::HashType, DFAStatePtr> state_set;
     auto model = std::make_shared<DFAModel>();
     // define 'Push' operation
     auto Push = [&set_queue, &state_set](const NFANodeSet &node_set) {
