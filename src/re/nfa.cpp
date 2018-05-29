@@ -95,6 +95,8 @@ void NFAModel::NormalizeNFA() {
     }
 }
 
+// a rough implementation of subset construction
+// TODO: optimize
 DFAModelPtr NFAModel::GenerateDFA() {
     std::deque<NFANodeSet> set_queue;
     std::map<NFANodeSet::HashType, DFAStatePtr> state_set;
@@ -122,6 +124,9 @@ DFAModelPtr NFAModel::GenerateDFA() {
     if (initial_set.find(tail_) != initial_set.end()) {
         model->AddFinalState(it->second);
     }
+    else {
+        model->AddState(it->second);
+    }
     // traversal every unique DFA state
     while (!set_queue.empty()) {
         const auto &front = set_queue.front();
@@ -141,6 +146,8 @@ DFAModelPtr NFAModel::GenerateDFA() {
             else {
                 model->AddState(it->second);
             }
+            // add symbol
+            model->AddSymbol(symbol);
         }
         set_queue.pop_front();
     }
