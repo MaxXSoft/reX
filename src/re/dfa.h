@@ -58,8 +58,10 @@ public:
         final_states_.insert(state);
     }
 
-    bool TestString(const std::string &str);
+    void AddSymbol(const SymbolPtr &symbol) { symbols_.insert(symbol); }
+
     void Simplify();
+    bool TestString(const std::string &str);
     void GenerateStateTable();
 
     void Release() {
@@ -73,8 +75,11 @@ public:
     void set_initial(const DFAStatePtr &state) { initial_ = state; }
 
 private:
+    using DFAStateSet = std::unordered_set<DFAStatePtr>;
+
     DFAStatePtr initial_;
-    std::unordered_set<DFAStatePtr> states_, final_states_;
+    DFAStateSet states_, final_states_;
+    SymbolSet symbols_;
 };
 
 } // namespace rex
