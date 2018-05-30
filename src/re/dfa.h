@@ -50,7 +50,7 @@ private:
 class DFAModel {
 public:
     DFAModel() {}
-    ~DFAModel() {}
+    ~DFAModel() { Release(); }
 
     void AddState(const DFAStatePtr &state) { states_.insert(state); }
 
@@ -64,18 +64,19 @@ public:
     bool TestString(const std::string &str);
     void GenerateStateTable();
 
-    void Release() {
+    void set_initial(const DFAStatePtr &state) { initial_ = state; }
+
+private:
+    using DFAStateSet = std::unordered_set<DFAStatePtr>;
+
+    void Release(bool with_symbols = true) {
         initial_.reset();
         for (auto &&i : states_) i->Release();
         for (auto &&i : final_states_) i->Release();
         states_.clear();
         final_states_.clear();
+        if (with_symbols) symbols_.clear();
     }
-
-    void set_initial(const DFAStatePtr &state) { initial_ = state; }
-
-private:
-    using DFAStateSet = std::unordered_set<DFAStatePtr>;
 
     DFAStatePtr initial_;
     DFAStateSet states_, final_states_;
