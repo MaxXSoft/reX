@@ -87,11 +87,14 @@ void GetDivision(SetQueue &set_queue, const rex::SymbolSet &symbols) {
 
 // get the state map for mapping old states to new states
 StateMap GetStateMap(const SetQueue &set_queue, const DFAStateSet &finals,
-        DFAStatePtr &init, DFAStateSet &states, DFAStateSet &final_states) {
+        const DFAStatePtr &initial, DFAStatePtr &init_ptr,
+        DFAStateSet &states, DFAStateSet &final_states) {
     StateMap state_map;
     for (const auto &state_set : set_queue) {
         auto cur_state = std::make_shared<rex::DFAState>();
-        if (!init) init = cur_state;
+        if (!init_ptr && state_set.find(initial) != state_set.end()) {
+            init_ptr = cur_state;
+        }
         bool added = false;
         for (const auto &state : state_set) {
             if (!added) {
@@ -194,7 +197,7 @@ void DFAModel::Simplify() {
     DFAStatePtr initial_state = nullptr;
     DFAStateSet states, final_states;
     // get the state map for mapping old states to new states
-    auto state_map = GetStateMap(set_queue, final_states_,
+    auto state_map = GetStateMap(set_queue, final_states_, initial_,
             initial_state, states, final_states);
     RebuildDFAState(set_queue, symbols_, state_map);
     // replace states of current model
