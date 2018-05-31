@@ -64,6 +64,11 @@ public:
     bool TestString(const std::string &str);
     void GenerateStateTable();
 
+#if NDEBUG
+#else
+    void Debug();
+#endif
+
     void set_initial(const DFAStatePtr &state) { initial_ = state; }
 
 private:

@@ -5,6 +5,11 @@
 #include <unordered_map>
 #include <utility>
 
+#if NDEBUG
+#else
+#include <iostream>
+#endif
+
 namespace {
 
 // re-define types in 'namespace rex'
@@ -210,5 +215,47 @@ void DFAModel::Simplify() {
 void DFAModel::GenerateStateTable() {
     //
 }
+
+#if NDEBUG
+#else
+void DFAModel::Debug() {
+    using namespace std;
+    // print info of symbols
+    for (const auto &s : symbols_) {
+        cout << "symbol " << s << ':' << endl << "  ";
+        CharSet set;
+        set.InsertSymbol(s);
+        int i = 0;
+        for (const auto &c : set) {
+            cout << c << ' ';
+            if (++i % 20 == 0) cout << endl << "  ";
+        }
+        cout << endl;
+    }
+    // print info of states
+    std::unordered_map<DFAStatePtr, int> id_map;
+    int cur_id = 0;
+    auto GetStateId = [&id_map, &cur_id](const DFAStatePtr &state) {
+        auto ret = id_map.insert({state, cur_id});
+        if (ret.second) ++cur_id;
+        return ret.first->second;
+    };
+    auto PrintStateSet = [this, GetStateId]
+            (const DFAStateSet &set, bool fin) {
+        for (const auto &s : set) {
+            cout << "state " << GetStateId(s) << ' ';
+            if (s == initial_) cout << "(initial) ";
+            if (fin) cout << "(final) ";
+            cout << ':' << endl;
+            for (const auto &e : s->out_edges()) {
+                cout << "  edge to state " << GetStateId(e->next_state());
+                cout << " with symbol " << e->symbol() << endl;
+            }
+        }
+    };
+    PrintStateSet(states_, false);
+    PrintStateSet(final_states_, true);
+}
+#endif
 
 } // namespace rex
