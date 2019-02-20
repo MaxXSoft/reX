@@ -213,7 +213,7 @@ void DFAModel::Simplify() {
 }
 
 void DFAModel::GenerateStateTable() {
-    //
+    // TODO
 }
 
 #if NDEBUG

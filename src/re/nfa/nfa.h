@@ -4,7 +4,6 @@
 #include <memory>
 #include <utility>
 #include <list>
-#include <unordered_set>
 
 #include <re/util/charset.h>
 #include <re/dfa/dfa.h>

@@ -111,13 +111,13 @@ private:
 };
 
 struct SymbolHash {
-    std::size_t operator()(const SymbolPtr &ptr) {
+    std::size_t operator()(const SymbolPtr &ptr) const {
         return ptr->GetHash();
     }
 };
 
 struct SymbolEqual {
-    bool operator()(const SymbolPtr &lhs, const SymbolPtr &rhs) {
+    bool operator()(const SymbolPtr &lhs, const SymbolPtr &rhs) const {
         return lhs->Equal(rhs.get());
     }
 };
