@@ -1,5 +1,5 @@
-#ifndef REX_RE_DFA_H_
-#define REX_RE_DFA_H_
+#ifndef REX_RE_DFA_DFA_H_
+#define REX_RE_DFA_DFA_H_
 
 #include <memory>
 #include <utility>
@@ -7,9 +7,9 @@
 #include <unordered_set>
 #include <string>
 
-#include "charset.h"
+#include <re/util/charset.h>
 
-namespace rex {
+namespace rex::re {
 
 class DFAEdge;
 class DFAState;
@@ -88,6 +88,6 @@ private:
     SymbolSet symbols_;
 };
 
-} // namespace rex
+} // namespace rex::re
 
-#endif // REX_RE_DFA_H_
+#endif // REX_RE_DFA_DFA_H_

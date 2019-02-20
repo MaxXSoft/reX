@@ -1,5 +1,5 @@
-#ifndef REX_RE_CHARSET_H_
-#define REX_RE_CHARSET_H_
+#ifndef REX_RE_UTIL_CHARSET_H_
+#define REX_RE_UTIL_CHARSET_H_
 
 #include <memory>
 #include <functional>
@@ -8,9 +8,9 @@
 #include <cassert>
 #include <cstdint>
 
-#include "util.h"
+#include <re/util/util.h>
 
-namespace rex {
+namespace rex::re {
 
 class SymbolBase {
 public:
@@ -280,6 +280,6 @@ private:
     std::uint64_t char_set_[4];
 };
 
-} // namespace rex
+} // namespace rex::re
 
-#endif // REX_RE_CHARSET_H_
+#endif // REX_RE_UTIL_CHARSET_H_

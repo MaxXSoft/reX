@@ -1,5 +1,5 @@
-#include "nfa.h"
-#include "util.h"
+#include <re/nfa/nfa.h>
+#include <re/util/util.h>
 
 #include <unordered_set>
 #include <queue>
@@ -7,8 +7,8 @@
 
 namespace {
 
-using NFANodePtr = rex::NFANodePtr;
-using SymbolPtr = rex::SymbolPtr;
+using NFANodePtr = rex::re::NFANodePtr;
+using SymbolPtr = rex::re::SymbolPtr;
 
 class NFANodeSet : public std::unordered_set<NFANodePtr> {
 public:
@@ -20,13 +20,13 @@ public:
         auto ret = insert(ptr);
         if (!ret.second) return;
         auto new_hash = hash_function()(ptr);
-        rex::HashCombile(hash_value_, new_hash);
+        rex::re::HashCombile(hash_value_, new_hash);
     }
 
     void merge(const NFANodeSet &node_set) {
         // TODO: optimize?
         for (const auto &i : node_set) insert(i);
-        rex::HashCombile(hash_value_, node_set.hash_value_);
+        rex::re::HashCombile(hash_value_, node_set.hash_value_);
     }
 
     auto hash_value() const { return hash_value_; }
@@ -74,7 +74,7 @@ NFANodeSet GetDFAState(const NFANodeSet &nodes, const SymbolPtr &symbol) {
 
 } // namespace
 
-namespace rex {
+namespace rex::re {
 
 void NFAModel::NormalizeNFA() {
     // add redundant epsilon edge for an entrance of NFA model
@@ -154,4 +154,4 @@ DFAModelPtr NFAModel::GenerateDFA() {
     return model;
 }
 
-} // namespace rex
+} // namespace rex::re

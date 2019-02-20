@@ -1,15 +1,15 @@
-#ifndef REX_RE_NFA_H_
-#define REX_RE_NFA_H_
+#ifndef REX_RE_NFA_NFA_H_
+#define REX_RE_NFA_NFA_H_
 
 #include <memory>
 #include <utility>
 #include <list>
 #include <unordered_set>
 
-#include "charset.h"
-#include "dfa.h"
+#include <re/util/charset.h>
+#include <re/dfa/dfa.h>
 
-namespace rex {
+namespace rex::re {
 
 class NFAEdge;
 class NFANode;
@@ -98,6 +98,6 @@ private:
     SymbolSet symbol_set_;
 };
 
-} // namespace rex
+} // namespace rex::re
 
-#endif // REX_RE_NFA_H_
+#endif // REX_RE_NFA_NFA_H_

@@ -1,8 +1,8 @@
-#include "reobj.h"
+#include <re/reobj/reobj.h>
 
 #include <cassert>
 
-namespace rex {
+namespace rex::re {
 
 REObject RE::Nil() {
     return REObject(new RENilObj());
@@ -175,4 +175,4 @@ NFAModelPtr REKleeneObj::GenerateNFA() {
     return model;
 }
 
-} // namespace rex
+} // namespace rex::re

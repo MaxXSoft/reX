@@ -1,13 +1,13 @@
-#ifndef REX_RE_REOBJ_H_
-#define REX_RE_REOBJ_H_
+#ifndef REX_RE_REOBJ_REOBJ_H_
+#define REX_RE_REOBJ_REOBJ_H_
 
 #include <string>
 #include <utility>
 #include <functional>
 
-#include "nfa.h"
+#include <re/nfa/nfa.h>
 
-namespace rex {
+namespace rex::re {
 
 class REObject;
 
@@ -109,6 +109,6 @@ private:
     REObject reo_;
 };
 
-} // namespace rex
+} // namespace rex::re
 
-#endif // REX_RE_REOBJ_H_
+#endif // REX_RE_REOBJ_REOBJ_H_

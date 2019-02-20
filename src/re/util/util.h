@@ -1,9 +1,9 @@
-#ifndef REX_RE_UTIL_H_
-#define REX_RE_UTIL_H_
+#ifndef REX_RE_UTIL_UTIL_H_
+#define REX_RE_UTIL_UTIL_H_
 
 #include <cstddef>
 
-namespace rex {
+namespace rex::re {
 
 inline void HashCombile(std::size_t &hash_value, std::size_t new_hash) {
     const auto magic_num = 0xc6a4a7935bd1e995ULL;
@@ -15,6 +15,6 @@ inline void HashCombile(std::size_t &hash_value, std::size_t new_hash) {
     hash_value *= magic_num;
 }
 
-} // namespace rex
+} // namespace rex::re
 
-#endif // REX_RE_UTIL_H_
+#endif // REX_RE_UTIL_UTIL_H_

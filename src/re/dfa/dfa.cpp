@@ -1,5 +1,5 @@
-#include "dfa.h"
-#include "util.h"
+#include <re/dfa/dfa.h>
+#include <re/util/util.h>
 
 #include <deque>
 #include <unordered_map>
@@ -13,14 +13,14 @@
 namespace {
 
 // re-define types in 'namespace rex'
-using DFAStatePtr = rex::DFAStatePtr;
+using DFAStatePtr = rex::re::DFAStatePtr;
 using DFAStateSet = std::unordered_set<DFAStatePtr>;
 
 using PosHash = std::size_t;
 using DFAHashMap = std::unordered_map<PosHash, DFAStateSet>;
 using SetQueue = std::deque<DFAStateSet>;
 using StateMap = std::unordered_map<DFAStatePtr, DFAStatePtr>;
-using EdgeMap = std::unordered_map<rex::SymbolPtr, rex::DFAEdgePtr>;
+using EdgeMap = std::unordered_map<rex::re::SymbolPtr, rex::re::DFAEdgePtr>;
 
 // insert state into hash map
 inline void InsertIntoMap(DFAHashMap &hash_map, PosHash hash,
@@ -46,7 +46,7 @@ int GetPosByState(const SetQueue &queue,
 }
 
 // part of DFA simplify algorithm
-void GetDivision(SetQueue &set_queue, const rex::SymbolSet &symbols) {
+void GetDivision(SetQueue &set_queue, const rex::re::SymbolSet &symbols) {
     // store the size of queue for comparison
     int queue_size;
     // get the divisions of current DFA states
@@ -75,7 +75,7 @@ void GetDivision(SetQueue &set_queue, const rex::SymbolSet &symbols) {
                         }
                     }
                     // get the position of set that includes next state
-                    rex::HashCombile(hash_val, GetPosByState(set_queue,
+                    rex::re::HashCombile(hash_val, GetPosByState(set_queue,
                             next, queue_size - i));
                 }
                 // insert into hash map
@@ -96,7 +96,7 @@ StateMap GetStateMap(const SetQueue &set_queue, const DFAStateSet &finals,
         DFAStateSet &states, DFAStateSet &final_states) {
     StateMap state_map;
     for (const auto &state_set : set_queue) {
-        auto cur_state = std::make_shared<rex::DFAState>();
+        auto cur_state = std::make_shared<rex::re::DFAState>();
         if (!init_ptr && state_set.find(initial) != state_set.end()) {
             init_ptr = cur_state;
         }
@@ -118,15 +118,15 @@ StateMap GetStateMap(const SetQueue &set_queue, const DFAStateSet &finals,
 }
 
 // create edge & insert edge into edge map
-inline void InsertEdge(EdgeMap &edge_map, const rex::SymbolPtr &symbol,
+inline void InsertEdge(EdgeMap &edge_map, const rex::re::SymbolPtr &symbol,
         const DFAStatePtr &next_state) {
-    auto new_edge = std::make_shared<rex::DFAEdge>(symbol, next_state);
+    auto new_edge = std::make_shared<rex::re::DFAEdge>(symbol, next_state);
     edge_map.insert({symbol, new_edge});
 }
 
 // part of DFA simplify algorithm
 void RebuildDFAState(const SetQueue &set_queue,
-        const rex::SymbolSet &symbols, StateMap &state_map) {
+        const rex::re::SymbolSet &symbols, StateMap &state_map) {
     for (const auto &state_set : set_queue) {
         // to store edges of current state
         EdgeMap edge_map;
@@ -171,7 +171,7 @@ void RebuildDFAState(const SetQueue &set_queue,
 
 } // namespace
 
-namespace rex {
+namespace rex::re {
 
 bool DFAModel::TestString(const std::string &str) {
     auto state = initial_;
@@ -258,4 +258,4 @@ void DFAModel::Debug() {
 }
 #endif
 
-} // namespace rex
+} // namespace rex::re
