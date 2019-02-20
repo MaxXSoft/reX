@@ -4,11 +4,11 @@
 
 namespace rex::re {
 
-REObject RE::Nil() {
+REObject Nil() {
     return REObject(new RENilObj());
 }
 
-REObject RE::Word(const std::string &word) {
+REObject Word(const std::string &word) {
     REObject reo;
     for (const auto &i : word) {
         auto symbol = std::make_shared<CharSymbol>(i);
@@ -18,37 +18,37 @@ REObject RE::Word(const std::string &word) {
     return std::move(reo);
 }
 
-REObject RE::Range(char c1, char c2) {
+REObject Range(char c1, char c2) {
     assert(c1 <= c2);
     auto symbol = std::make_shared<RangeSymbol>(c1, c2);
     return REObject(new RESymbolObj(symbol));
 }
 
-REObject RE::Lambda(CharSet::SymbolDef func) {
+REObject Lambda(CharSet::SymbolDef func) {
     CharSet charset;
     charset.InsertLambda(func);
     return REObject(new RESymbolObj(charset.MakeSymbol()));
 }
 
-REObject RE::And(REObject lhs, REObject rhs) {
+REObject And(REObject lhs, REObject rhs) {
     return REObject(new REAndObj(std::move(lhs), std::move(rhs)));
 }
 
-REObject RE::Or(REObject lhs, REObject rhs) {
+REObject Or(REObject lhs, REObject rhs) {
     return REObject(new REOrObj(std::move(lhs), std::move(rhs)));
 }
 
-REObject RE::Many(REObject reo) {
+REObject Many(REObject reo) {
     return REObject(new REKleeneObj(std::move(reo)));
 }
 
-REObject RE::Many1(REObject reo) {
+REObject Many1(REObject reo) {
     auto kleene = REObject(new REKleeneObj(reo));
     return REObject(new REAndObj(reo, std::move(kleene)));
 }
 
-REObject RE::Optional(REObject reo) {
-    auto nil = RE::Nil();
+REObject Optional(REObject reo) {
+    auto nil = Nil();
     return REObject(new REOrObj(std::move(reo), std::move(nil)));
 }
 

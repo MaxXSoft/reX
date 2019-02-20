@@ -11,18 +11,16 @@ namespace rex::re {
 
 class REObject;
 
-class RE {
-public:
-    static REObject Nil();
-    static REObject Word(const std::string &word);
-    static REObject Range(char c1, char c2);
-    static REObject Lambda(CharSet::SymbolDef func);
-    static REObject And(REObject lhs, REObject rhs);
-    static REObject Or(REObject lhs, REObject rhs);
-    static REObject Many(REObject reo);
-    static REObject Many1(REObject reo);
-    static REObject Optional(REObject reo);
-};
+// helper functions
+REObject Nil();
+REObject Word(const std::string &word);
+REObject Range(char c1, char c2);
+REObject Lambda(CharSet::SymbolDef func);
+REObject And(REObject lhs, REObject rhs);
+REObject Or(REObject lhs, REObject rhs);
+REObject Many(REObject reo);
+REObject Many1(REObject reo);
+REObject Optional(REObject reo);
 
 class REObjectInterface {
 public:
@@ -38,23 +36,23 @@ public:
             : std::shared_ptr<REObjectInterface>(ptr) {}
 
     REObject operator&(REObject reo) {
-        return RE::And(*this, reo);
+        return And(*this, reo);
     }
 
     REObject operator|(REObject reo) {
-        return RE::Or(*this, reo);
+        return Or(*this, reo);
     }
 
     REObject Many() {
-        return RE::Many(*this);
+        return rex::re::Many(*this);
     }
 
     REObject Many1() {
-        return RE::Many1(*this);
+        return rex::re::Many1(*this);
     }
 
     REObject Optional() {
-        return RE::Optional(*this);
+        return rex::re::Optional(*this);
     }
 };
 
